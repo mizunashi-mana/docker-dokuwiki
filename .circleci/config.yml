@@ -1,0 +1,48 @@
+version: 2
+jobs:
+    build:
+        machine: true
+        steps:
+        - checkout
+
+        - run:
+            name: Build image
+            command: docker-compose build
+
+        - run:
+            name: Launch containers
+            command: docker-compose up -d
+
+        - run:
+            name: Waiting to start containers
+            command: sleep 1
+
+        - run:
+            name: Test Wiki page
+            command: curl http://localhost:8080/wiki:welcome
+
+        - run:
+            name: Remove containers
+            command: docker-compose down
+    trigger:
+        machine: true
+        steps:
+        - checkout
+
+        - run:
+            name: Trigger DockerHub
+            command: >
+                curl -sS -H "Content-Type: application/json" --data '{"build": true}' -X POST
+                -L https://registry.hub.docker.com/u/mizunashi/dokuwiki/trigger/${TRIGGER_TOKEN}/
+
+workflows:
+    version: 2
+    main:
+        jobs:
+        - build
+        - deploy:
+            requires:
+            - build
+            filters:
+                branches:
+                    only: master
