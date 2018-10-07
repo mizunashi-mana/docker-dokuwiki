@@ -11,6 +11,10 @@ configure_dokuwiki() {
     DOKUWIKI_FULLNAME=${DOKUWIKI_FULLNAME:-"Administrator"}
     DOKUWIKI_EMAIL=${DOKUWIKI_EMAIL:-"root@$(hostname)"}
 
+    tar -xzf dokuwiki.tgz --strip 1
+    chown -hR www-data:www-data .
+    rm -rf dokuwiki.tgz
+
     POSTDATA="submit="
     POSTDATA="${POSTDATA}&l=${DOKUWIKI_LANG}"
     POSTDATA="${POSTDATA}&d[title]=${DOKUWIKI_TITLE}"
@@ -24,15 +28,18 @@ configure_dokuwiki() {
     POSTDATA="${POSTDATA}&d[license]=cc-by-sa"
     POSTDATA="${POSTDATA}&d[pop]=pop"
 
-    wget -q -O- --post-data "$POSTDATA" http://localhost/install.php \
-        | grep 'your new DokuWiki'
-    sleep 3
-
-    rm -rf "${DOKUWIKI_HOME}/install.php"
+    INSTALL_MESSAGE="$(wget -q -O- --post-data "$POSTDATA" http://localhost/install.php)"
+    if echo "$INSTALL_MESSAGE" | grep '"doku.php?id=wiki:welcome"' >/dev/null; then
+        sleep 3
+        rm -rf "${DOKUWIKI_HOME}/install.php"
+    else
+        echo "Failed to run the installer." >&2
+        echo "$INSTALL_MESSAGE"
+    fi
 }
 
-if [[ ! -d "${DOKUWIKI_CONF_DIR}" ]]; then
-    /usr/bin/supervisord -nc /etc/supervisor/supervisord.conf &
+if [[ -f "${DOKUWIKI_HOME}/install.php" && ! -f "${DOKUWIKI_CONF_DIR}/local.php" ]]; then
+    /usr/bin/supervisord -nc /etc/supervisor/supervisord.conf >/dev/null &
     SUPERVISOR_PID=$!
     sleep 5
     configure_dokuwiki

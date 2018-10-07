@@ -1,7 +1,10 @@
 version: '3'
 
 services:
-  dokuwiki:
-    build: .
-    ports:
-        - "8080:80"
+    dokuwiki:
+        build: .
+        ports:
+            - 8080:80
+        environment:
+            #- DEBUG=true
+            - DOKUWIKI_LANG=ja

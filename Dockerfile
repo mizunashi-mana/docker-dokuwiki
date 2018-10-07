@@ -1,11 +1,12 @@
 FROM debian:stable
 
 ENV DOKUWIKI_VERSION="2018-04-22a" \
+    DOKUWIKI_CSUM="18765a29508f96f9882349a304bffc03" \
     DOKUWIKI_HOME="/var/www/dokuwiki"
 
-ENV DOKUWIKI_DATA_DIR="${DOKUWIKI_HOME}/data" \
-    DOKUWIKI_PLUGIN_DIR="${DOKUWIKI_HOME}/plugins" \
-    DOKUWIKI_CONF_DIR="${DOKUWIKI_HOME}/conf" \
+ENV DOKUWIKI_CONF_DIR="${DOKUWIKI_HOME}/conf" \
+    DOKUWIKI_DATA_DIR="${DOKUWIKI_HOME}/data" \
+    DOKUWIKI_PLUGIN_DIR="${DOKUWIKI_HOME}/lib/plugins" \
     DOKUWIKI_TPL_DIR="${DOKUWIKI_HOME}/lib/tpl"
 
 RUN apt-get update \
@@ -21,8 +22,9 @@ RUN apt-get update \
 
 RUN mkdir -p "${DOKUWIKI_HOME}" \
  && cd "${DOKUWIKI_HOME}" \
- && wget -q -O- "https://download.dokuwiki.org/src/dokuwiki/dokuwiki-${DOKUWIKI_VERSION}.tgz" \
-  | tar xz --strip 1 \
+ && wget -q -O "${DOKUWIKI_HOME}/dokuwiki.tgz" "https://download.dokuwiki.org/src/dokuwiki/dokuwiki-${DOKUWIKI_VERSION}.tgz" \
+ && md5sum dokuwiki.tgz | grep "${DOKUWIKI_CSUM}" \
+ && tar -xz --strip 1 -f dokuwiki.tgz \
  && chown -R www-data:www-data "${DOKUWIKI_HOME}"
 
 RUN rm -rf /etc/nginx/sites-enabled/*
