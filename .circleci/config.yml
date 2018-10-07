@@ -35,14 +35,7 @@ jobs:
             name: Trigger to DockerHub
             command: >
                 curl -sS -H "Content-Type: application/json" -X POST
-                --data '{"docker_tag": "latest"}'
-                -L https://registry.hub.docker.com/u/mizunashi/dokuwiki/trigger/${TRIGGER_TOKEN}/
-
-        - run:
-            name: Tag trigger to DockerHub
-            command: >
-                curl -sS -H "Content-Type: application/json" -X POST
-                --data "{\"docker_tag\": \"$(cat Dockerfile | grep DOKUWIKI_VERSION= | sed 's/^.*DOKUWIKI_VERSION="\(.*\)".*$/\1/')\"}"
+                --data '{"build": True}'
                 -L https://registry.hub.docker.com/u/mizunashi/dokuwiki/trigger/${TRIGGER_TOKEN}/
 
 workflows:
