@@ -20,7 +20,8 @@ jobs:
         - run:
             name: Test Wiki page
             command: |
-                curl http://localhost:8080/wiki:welcome
+                curl -v http://localhost:8080/wiki:welcome
+                curl -v -X POST -d 'u=root' -d 'p=password' 'http://localhost:8080/doku.php?id=start&do=login&sectok='
 
         - run:
             name: Remove containers
@@ -33,16 +34,15 @@ jobs:
         - run:
             name: Trigger to DockerHub
             command: >
-                curl -sS -H "Content-Type: application/json" -X POST
-                --data '{"build": true}'
+                curl -v -sS -H "Content-Type: application/json" -X POST
+                --data '{"source_type": "Tag", "source_name": "master"}'
                 -L https://registry.hub.docker.com/u/mizunashi/dokuwiki/trigger/${TRIGGER_TOKEN}/
 
         - run:
             name: Tag trigger to DockerHub
             command: >
-                env IMAGE_TAG_NAME=$(cat Dockerfile | grep DOKUWIKI_VERSION= | sed 's/^.*DOKUWIKI_VERSION="\(.*\)".*$/\1/')
-                curl -sS -H "Content-Type: application/json" -X POST
-                --data '{"source_type": "Tag", "source_name": "${IMAGE_TAG_NAME}"}'
+                curl -v -sS -H "Content-Type: application/json" -X POST
+                --data "{\"source_type\": \"Tag\", \"source_name\": \"$(cat Dockerfile | grep DOKUWIKI_VERSION= | sed 's/^.*DOKUWIKI_VERSION="\(.*\)".*$/\1/')\"}"
                 -L https://registry.hub.docker.com/u/mizunashi/dokuwiki/trigger/${TRIGGER_TOKEN}/
 
 workflows:
