@@ -15,11 +15,12 @@ jobs:
 
         - run:
             name: Waiting to start containers
-            command: sleep 1
+            command: sleep 10
 
         - run:
             name: Test Wiki page
-            command: curl http://localhost:8080/wiki:welcome
+            command: |
+                curl http://localhost:8080/wiki:welcome
 
         - run:
             name: Remove containers
@@ -30,9 +31,18 @@ jobs:
         - checkout
 
         - run:
-            name: Trigger DockerHub
+            name: Trigger to DockerHub
             command: >
-                curl -sS -H "Content-Type: application/json" --data '{"build": true}' -X POST
+                curl -sS -H "Content-Type: application/json" -X POST
+                --data '{"build": true}'
+                -L https://registry.hub.docker.com/u/mizunashi/dokuwiki/trigger/${TRIGGER_TOKEN}/
+
+        - run:
+            name: Tag trigger to DockerHub
+            command: >
+                env IMAGE_TAG_NAME=$(cat Dockerfile | grep DOKUWIKI_VERSION= | sed 's/^.*DOKUWIKI_VERSION="\(.*\)".*$/\1/')
+                curl -sS -H "Content-Type: application/json" -X POST
+                --data '{"source_type": "Tag", "source_name": "${IMAGE_TAG_NAME}"}'
                 -L https://registry.hub.docker.com/u/mizunashi/dokuwiki/trigger/${TRIGGER_TOKEN}/
 
 workflows:
@@ -40,7 +50,7 @@ workflows:
     main:
         jobs:
         - build
-        - deploy:
+        - trigger:
             requires:
             - build
             filters:
