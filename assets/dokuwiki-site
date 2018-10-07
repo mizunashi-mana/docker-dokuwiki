@@ -1,0 +1,58 @@
+server {
+    server_tokens off;
+    server_name _;
+    listen 80;
+    autoindex off;
+
+    access_log /var/log/nginx/dokuwiki.access.log;
+    error_log /var/log/nginx/dokuwiki.error.log;
+
+    root /var/www/dokuwiki;
+    index doku.php;
+
+    location ~ /(data/|conf/|bin/|inc/) {
+        deny all;
+    }
+
+    location ~ /\. {
+        deny all;
+    }
+
+    location / {
+        try_files $uri $uri/ @dokuwiki;
+    }
+
+    location ^~ /lib.*\.(gif|png|ico|jpg)$ {
+        expires 30d;
+    }
+
+    error_page 404 /404;
+    error_page 500 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/www;
+    }
+
+    location = /(robots.txt|favicon.ico) {
+        access_log off;
+        log_not_found off;
+    }
+
+    location ~ /(COPYING|README|VERSION)$ {
+        try_files dummy @dokuwiki;
+    }
+
+    location @dokuwiki {
+        rewrite ^/_media/(.*)           /lib/exe/fetch.php?media=$1 last;
+        rewrite ^/_detail/(.*)          /lib/exe/detail.php?media=$1 last;
+        rewrite ^/_export/([^/]+)/(.*)  /doku.php?do=export_$1&id=$2 last;
+        rewrite ^/(.*)                  /doku.php?id=$1&$args last;
+    }
+
+    location ~ \.php$ {
+        try_files $uri $uri/ @dokuwiki;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param REDIRECT_STATUS 200;
+        fastcgi_pass unix:/var/run/php/php-fpm.sock;
+    }
+}
