@@ -1,4 +1,4 @@
-FROM debian:stable
+FROM debian:stretch
 
 ENV DOKUWIKI_VERSION="2018-04-22a" \
     DOKUWIKI_CSUM="18765a29508f96f9882349a304bffc03" \
