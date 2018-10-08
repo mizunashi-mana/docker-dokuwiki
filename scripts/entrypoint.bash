@@ -38,7 +38,13 @@ configure_dokuwiki() {
     fi
 }
 
-if [[ -f "${DOKUWIKI_HOME}/install.php" && ! -f "${DOKUWIKI_CONF_DIR}/local.php" ]]; then
+check_initialized_dokuwiki() {
+    [[ -f "${DOKUWIKI_HOME}/install.php" && ! -f "${DOKUWIKI_CONF_DIR}/local.php" ]]
+}
+
+initialize_dokuwiki() {
+    echo "Initialize DokuWiki"
+
     /usr/bin/supervisord -nc /etc/supervisor/supervisord.conf >/dev/null &
     SUPERVISOR_PID=$!
     sleep 5
@@ -46,6 +52,10 @@ if [[ -f "${DOKUWIKI_HOME}/install.php" && ! -f "${DOKUWIKI_CONF_DIR}/local.php"
     kill -15 $SUPERVISOR_PID
     ps h -p $SUPERVISOR_PID > /dev/null && wait $SUPERVISOR_PID
     rm -rf /var/run/supervisor.sock
+}
+
+if check_initialized_dokuwiki; then
+    initialize_dokuwiki
 fi
 
 exec /usr/bin/supervisord -nc /etc/supervisor/supervisord.conf
